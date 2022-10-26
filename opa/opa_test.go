@@ -9,6 +9,7 @@ import (
 	"github.com/open-policy-agent/opa/storage/inmem"
 	"github.com/open-policy-agent/opa/util"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"testing"
 )
 
@@ -327,10 +328,7 @@ func Test_Rego_PartialResult(t *testing.T) {
 		}
 	`
 
-	// Define dummy roles and role bindings for the example. In real-world
-	// scenarios, this data would be pushed or pulled into the service
-	// embedding OPA either from an external API or configuration file.
-	store := inmem.NewFromReader(bytes.NewBufferString(`{
+	data := `{
 		"roles": [
 			{
 				"resources": ["documentA", "documentB"],
@@ -353,7 +351,12 @@ func Test_Rego_PartialResult(t *testing.T) {
 				"role": "analyst"
 			}
 		]
-	}`))
+	}`
+
+	// Define dummy roles and role bindings for the example. In real-world
+	// scenarios, this data would be pushed or pulled into the service
+	// embedding OPA either from an external API or configuration file.
+	store := inmem.NewFromReader(bytes.NewBufferString(data))
 
 	// Prepare and run partial evaluation on the query. The result of partial
 	// evaluation can be cached for performance. When the data or policy
@@ -364,9 +367,9 @@ func Test_Rego_PartialResult(t *testing.T) {
 		rego.Store(store),
 	)
 
-	pr, err := r.PartialResult(ctx)
+	query, err := r.PrepareForEval(ctx)
 	if err != nil {
-		// Handle error.
+		log.Fatal(err)
 	}
 
 	// Define example inputs (representing requests) that will be used to test
@@ -397,18 +400,13 @@ func Test_Rego_PartialResult(t *testing.T) {
 
 	for i := range examples {
 
-		// Prepare and run normal evaluation from the result of partial
-		// evaluation.
-		r := pr.Rego(
-			rego.Input(examples[i]),
-		)
-
-		rs, err := r.Eval(ctx)
+		rs, err := query.Eval(ctx, rego.EvalInput(examples[i]))
 
 		if err != nil || len(rs) != 1 || len(rs[0].Expressions) != 1 {
 			// Handle erorr.
 		} else {
 			fmt.Printf("input %d allowed: %v\n", i+1, rs[0].Expressions[0].Value)
+			fmt.Printf("input %d allowed: %v\n", i+1, rs.Allowed())
 		}
 	}
 

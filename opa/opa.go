@@ -3,15 +3,16 @@ package opa
 import (
 	"bytes"
 	"context"
-	"log"
-
 	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/storage"
 	"github.com/open-policy-agent/opa/storage/inmem"
+	"log"
 )
 
 type Opa struct {
-	eq *rego.PreparedEvalQuery
-	pq *rego.PreparedPartialQuery
+	eq    *rego.PreparedEvalQuery
+	pq    *rego.PreparedPartialQuery
+	store storage.Store
 }
 
 func NewOpaWithString(queryString, moduleName, moduleString string) *Opa {
@@ -38,12 +39,14 @@ func NewOpaWithString(queryString, moduleName, moduleString string) *Opa {
 func NewOpaWithDataString(queryString, moduleName, moduleString, dataString string) *Opa {
 	ctx := context.Background()
 
-	store := inmem.NewFromReader(bytes.NewBufferString(dataString))
+	c := &Opa{
+		store: inmem.NewFromReader(bytes.NewBufferString(dataString)),
+	}
 
 	r := rego.New(
 		rego.Query(queryString),
 		rego.Module(moduleName, moduleString),
-		rego.Store(store),
+		rego.Store(c.store),
 	)
 
 	query, err := r.PrepareForEval(ctx)
@@ -52,9 +55,7 @@ func NewOpaWithDataString(queryString, moduleName, moduleString, dataString stri
 		return nil
 	}
 
-	c := &Opa{
-		eq: &query,
-	}
+	c.eq = &query
 
 	return c
 }
@@ -82,4 +83,31 @@ func (o *Opa) evalPartial(ctx context.Context, input interface{}) bool {
 
 	//log.Printf("eq result: %v, %#v\n", rs.Allowed(), rs)
 	return false
+}
+
+func (o *Opa) updateData(ctx context.Context, packagePath string, data interface{}) bool {
+	params := storage.WriteParams
+
+	txn, err := o.store.NewTransaction(ctx, params)
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
+
+	p, ok := storage.ParsePath(packagePath)
+	if !ok {
+		return false
+	}
+
+	if err := o.store.Write(ctx, txn, storage.ReplaceOp, p, data); err != nil {
+		log.Fatal(err)
+		return false
+	}
+
+	if err := o.store.Commit(ctx, txn); err != nil {
+		log.Fatal(err)
+		return false
+	}
+
+	return true
 }

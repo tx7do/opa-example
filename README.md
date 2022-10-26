@@ -8,7 +8,7 @@ OPA 最初是由 Styra 公司在 2016 年创建并开源的项目，目前该公
 
 OPA 首次进入 云原生计算基金会 [CNCF](https://www.cncf.io/) 并成为 sandbox 级别的项目是在 2018 年， 在 2021 年的 2 月份便已经从 CNCF 毕业，这个过程相对来说还是比较快的，由此也可以看出 OPA 是一个比较活跃且应用广泛的项目。
 
-## OPA 如何工作？
+## Rego 基本语法
 
 ## Playground
 
@@ -28,3 +28,4 @@ OPA 首次进入 云原生计算基金会 [CNCF](https://www.cncf.io/) 并成为
 - [How to Implement Role Based Access Control (RBAC) using Open Policy Agent (OPA)](https://www.permit.io/blog/implement-rbac-using-opa)
 - [Open Policy Agent vs Casbin](https://qingwave.github.io/openpolicyagent-vs-casbin/#open-policy-agent)
 - [Using OPA - AWS](https://docs.aws.amazon.com/prescriptive-guidance/latest/saas-multitenant-api-access-authorization/opa.html)
+- [OPA-重新定义规则引擎-入门篇](https://zhuanlan.zhihu.com/p/113110851)
