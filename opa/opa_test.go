@@ -33,7 +33,7 @@ func Test_Authz_Embed(t *testing.T) {
 				"group": "groups",
 			},
 		}
-		assert.True(t, o.Test(ctx, input))
+		assert.True(t, o.CheckAllowed(ctx, input))
 	}
 	{
 		input := map[string]interface{}{
@@ -44,7 +44,7 @@ func Test_Authz_Embed(t *testing.T) {
 				"group": "groups",
 			},
 		}
-		assert.False(t, o.Test(ctx, input))
+		assert.False(t, o.CheckAllowed(ctx, input))
 	}
 	{
 		input := map[string]interface{}{
@@ -55,7 +55,7 @@ func Test_Authz_Embed(t *testing.T) {
 				"group": "groups",
 			},
 		}
-		assert.True(t, o.Test(ctx, input))
+		assert.True(t, o.CheckAllowed(ctx, input))
 	}
 	{
 		input := map[string]interface{}{
@@ -66,8 +66,103 @@ func Test_Authz_Embed(t *testing.T) {
 				"group": "",
 			},
 		}
-		assert.False(t, o.Test(ctx, input))
+		assert.False(t, o.CheckAllowed(ctx, input))
 	}
+}
+
+func Test_RBAC_String(t *testing.T) {
+	module := `
+		package example
+		import data.bindings
+		import data.roles
+		default allow = false
+		allow {
+			user_has_role[role_name]
+			role_has_permission[role_name]
+		}
+		user_has_role[role_name] {
+			b = bindings[_]
+			b.role = role_name
+			b.user = input.subject.user
+		}
+		role_has_permission[role_name] {
+			r = roles[_]
+			r.name = role_name
+			match_with_wildcard(r.operations, input.operation)
+			match_with_wildcard(r.resources, input.resource)
+		}
+		match_with_wildcard(allowed, value) {
+			allowed[_] = "*"
+		}
+		match_with_wildcard(allowed, value) {
+			allowed[_] = value
+		}
+	`
+
+	data := `{
+		"roles": [
+			{
+				"resources": ["documentA", "documentB"],
+				"operations": ["read"],
+				"name": "analyst"
+			},
+			{
+				"resources": ["*"],
+				"operations": ["*"],
+				"name": "admin"
+			}
+		],
+		"bindings": [
+			{
+				"user": "bob",
+				"role": "admin"
+			},
+			{
+				"user": "alice",
+				"role": "analyst"
+			}
+		]
+	}`
+
+	ctx := context.Background()
+	o := NewOpaWithDataString("data.example.allow", "rbac.repo", module, data)
+
+	examples := []map[string]interface{}{
+		{
+			"resource":  "documentA",
+			"operation": "write",
+			"subject": map[string]interface{}{
+				"user": "bob",
+			},
+		},
+		{
+			"resource":  "documentB",
+			"operation": "write",
+			"subject": map[string]interface{}{
+				"user": "alice",
+			},
+		},
+		{
+			"resource":  "documentB",
+			"operation": "read",
+			"subject": map[string]interface{}{
+				"user": "alice",
+			},
+		},
+	}
+
+	for i := range examples {
+		allowed := o.CheckAllowed(ctx, examples[i])
+		{
+			fmt.Printf("input %d allowed: %v\n", i+1, allowed)
+		}
+	}
+
+	// Output:
+	//
+	// input 1 allowed: true
+	// input 2 allowed: false
+	// input 3 allowed: true
 }
 
 func Test_Rego_Eval_simple(t *testing.T) {
@@ -314,101 +409,6 @@ func Test_Rego_PartialResult(t *testing.T) {
 			// Handle erorr.
 		} else {
 			fmt.Printf("input %d allowed: %v\n", i+1, rs[0].Expressions[0].Value)
-		}
-	}
-
-	// Output:
-	//
-	// input 1 allowed: true
-	// input 2 allowed: false
-	// input 3 allowed: true
-}
-
-func Test_RBAC_String(t *testing.T) {
-	module := `
-		package example
-		import data.bindings
-		import data.roles
-		default allow = false
-		allow {
-			user_has_role[role_name]
-			role_has_permission[role_name]
-		}
-		user_has_role[role_name] {
-			b = bindings[_]
-			b.role = role_name
-			b.user = input.subject.user
-		}
-		role_has_permission[role_name] {
-			r = roles[_]
-			r.name = role_name
-			match_with_wildcard(r.operations, input.operation)
-			match_with_wildcard(r.resources, input.resource)
-		}
-		match_with_wildcard(allowed, value) {
-			allowed[_] = "*"
-		}
-		match_with_wildcard(allowed, value) {
-			allowed[_] = value
-		}
-	`
-
-	data := `{
-		"roles": [
-			{
-				"resources": ["documentA", "documentB"],
-				"operations": ["read"],
-				"name": "analyst"
-			},
-			{
-				"resources": ["*"],
-				"operations": ["*"],
-				"name": "admin"
-			}
-		],
-		"bindings": [
-			{
-				"user": "bob",
-				"role": "admin"
-			},
-			{
-				"user": "alice",
-				"role": "analyst"
-			}
-		]
-	}`
-
-	ctx := context.Background()
-	o := NewOpaWithStringPartial("data.example.allow", "rbac.repo", module, data)
-
-	examples := []map[string]interface{}{
-		{
-			"resource":  "documentA",
-			"operation": "write",
-			"subject": map[string]interface{}{
-				"user": "bob",
-			},
-		},
-		{
-			"resource":  "documentB",
-			"operation": "write",
-			"subject": map[string]interface{}{
-				"user": "alice",
-			},
-		},
-		{
-			"resource":  "documentB",
-			"operation": "read",
-			"subject": map[string]interface{}{
-				"user": "alice",
-			},
-		},
-	}
-
-	for i := range examples {
-		allowed := o.Test(ctx, examples[i])
-		{
-			fmt.Printf("input %d allowed: %v\n", i+1, allowed)
 		}
 	}
 

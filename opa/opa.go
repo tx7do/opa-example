@@ -3,14 +3,15 @@ package opa
 import (
 	"bytes"
 	"context"
+	"log"
+
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/storage/inmem"
-	"log"
 )
 
 type Opa struct {
-	opa *rego.PreparedEvalQuery
-	pr  *rego.PartialResult
+	eq *rego.PreparedEvalQuery
+	pq *rego.PreparedPartialQuery
 }
 
 func NewOpaWithString(queryString, moduleName, moduleString string) *Opa {
@@ -28,16 +29,16 @@ func NewOpaWithString(queryString, moduleName, moduleString string) *Opa {
 	}
 
 	c := &Opa{
-		opa: &query,
+		eq: &query,
 	}
 
 	return c
 }
 
-func NewOpaWithStringPartial(queryString, moduleName, moduleString, partialString string) *Opa {
+func NewOpaWithDataString(queryString, moduleName, moduleString, dataString string) *Opa {
 	ctx := context.Background()
 
-	store := inmem.NewFromReader(bytes.NewBufferString(partialString))
+	store := inmem.NewFromReader(bytes.NewBufferString(dataString))
 
 	r := rego.New(
 		rego.Query(queryString),
@@ -45,49 +46,40 @@ func NewOpaWithStringPartial(queryString, moduleName, moduleString, partialStrin
 		rego.Store(store),
 	)
 
-	pr, err := r.PartialResult(ctx)
+	query, err := r.PrepareForEval(ctx)
 	if err != nil {
 		log.Fatal(err)
 		return nil
 	}
 
 	c := &Opa{
-		pr: &pr,
+		eq: &query,
 	}
 
 	return c
 }
 
-func (o *Opa) Test(ctx context.Context, input interface{}) bool {
-	if o.opa != nil {
-		return o.evalQuery(ctx, input)
-	} else if o.pr != nil {
-		return o.evalPartial(ctx, input)
-	}
-	return false
+func (o *Opa) CheckAllowed(ctx context.Context, input interface{}) bool {
+	return o.evalQuery(ctx, input)
 }
 
 func (o *Opa) evalQuery(ctx context.Context, input interface{}) bool {
-	rs, err := o.opa.Eval(ctx, rego.EvalInput(input))
+	rs, err := o.eq.Eval(ctx, rego.EvalInput(input))
 	if err != nil {
 		log.Fatal(err)
 		return false
 	}
-	//log.Printf("opa result: %v, %#v\n", rs.Allowed(), rs)
+	//log.Printf("eq result: %v, %#v\n", rs.Allowed(), rs)
 	return rs.Allowed()
 }
 
 func (o *Opa) evalPartial(ctx context.Context, input interface{}) bool {
-	r := o.pr.Rego(
-		rego.Input(input),
-	)
-
-	rs, err := r.Eval(ctx)
+	_, err := o.pq.Partial(ctx, rego.EvalInput(input))
 	if err != nil {
 		log.Fatal(err)
 		return false
 	}
 
-	//log.Printf("opa result: %v, %#v\n", rs.Allowed(), rs)
-	return rs.Allowed()
+	//log.Printf("eq result: %v, %#v\n", rs.Allowed(), rs)
+	return false
 }
