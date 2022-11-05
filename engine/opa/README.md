@@ -1,16 +1,17 @@
-# OPA decision engine
+# OPA 决策引擎
 
-## [`policy.go`](policy.go)
+## [`policy.bindata.go`](policy.go)
 
-This file is generated from `policy/*.rego`.
+此文件生成于 `policy/*.rego`.
 
-The generation is done using go-bindata, from `go generate`. Run this from `components/authz-service`:
+运行以下命令生成：
 
+```shell
+go generate ./...
 ```
-$ go generate ./...
-$ # no output on success
+
+注意： 需要保证[go-bindata](github.com/kevinburke/go-bindata)被安装。
+
+```shell
+go install github.com/kevinburke/go-bindata/go-bindata@latest
 ```
-
-It requires that go-bindata is installed.
-
-TODO (sr): ensure this works properly in habitat and studio env. Other projects also use go-bindata, IIRC.
