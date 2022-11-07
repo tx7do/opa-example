@@ -443,7 +443,7 @@ func TestSubjectsMatching(t *testing.T) {
 	input := map[string]interface{}{}
 	data := "{}"
 
-	// we're testing subjets_matches(in, stored)
+	// we're testing subjects_matches(in, stored)
 	in := "user:local:someid" // "in" argument
 
 	// expectedSuccess => "stored" argument

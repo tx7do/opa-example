@@ -48,8 +48,7 @@ func createLogger() *zap.Logger {
 func BenchmarkFilterAuthorizedPairsRealWorldExample(b *testing.B) {
 	ctx := context.Background()
 
-	l := createLogger()
-	s, err := New(ctx, l)
+	s, err := New(ctx, WithLogger(createLogger()))
 	require.NoError(b, err, "init state")
 
 	pairs := []engine.Pair{
@@ -144,6 +143,8 @@ func BenchmarkFilterAuthorizedPairsRealWorldExample(b *testing.B) {
 			filteredPairsResp = resp
 		})
 	}
+
+	fmt.Println(filteredPairsResp)
 }
 
 // BenchmarkFilterAuthorizedPairsRealWorldExample/with_0_teams_in_input-8       18	   71469413 ns/op	   27715819 B/op	  416006 allocs/op
@@ -160,7 +161,7 @@ func BenchmarkFilterAuthorizedPairsRealWorldExample(b *testing.B) {
 // 12/16/19 summary: up to 1-2 seconds with 1000 teams
 
 // Q: Which type of input is computed faster, generic Go interface or specific OPA Term?
-func BenchmarGenericInput(b *testing.B) {
+func BenchmarkGenericInput(b *testing.B) {
 	subjects, projects := []string{"user:local:alice@example.com", "team:local:admins"}, []string{"project-1", "project-2"}
 	resource, action := "some:resource", "some:resource:action"
 	var r ast.Value
@@ -204,9 +205,7 @@ func BenchmarkAuthorizedProjectPreparedQueryWithIncreasingPolicies(b *testing.B)
 	var r error
 	ctx := context.Background()
 
-	l := createLogger()
-
-	s, err := New(ctx, l)
+	s, err := New(ctx, WithLogger(createLogger()))
 	require.NoError(b, err, "init state")
 
 	policyCounts := []int{0, 5, 10, 20, 50, 100, 200, 1000}
@@ -247,9 +246,7 @@ func BenchmarkAuthorizedProjectPreparedQueryWithIncreasingPolicies(b *testing.B)
 func BenchmarkProjectsAuthorizedWithIncreasingPolicies(b *testing.B) {
 	ctx := context.Background()
 
-	l := createLogger()
-
-	s, err := New(ctx, l)
+	s, err := New(ctx, WithLogger(createLogger()))
 	require.NoError(b, err, "init state")
 
 	policyCounts := []int{0, 5, 10, 20, 50, 100, 200, 1000}
@@ -277,6 +274,8 @@ func BenchmarkProjectsAuthorizedWithIncreasingPolicies(b *testing.B) {
 			projectsResponse = resp
 		})
 	}
+
+	fmt.Println(projectsResponse)
 }
 
 // BenchmarkProjectsAuthorizedWithIncreasingPolicies/store_with_0_custom_policies_and_10_custom_roles-8         	    8162	    148936 ns/op	   49535 B/op	     541 allocs/op
@@ -292,9 +291,7 @@ func BenchmarkProjectsAuthorizedWithIncreasingPolicies(b *testing.B) {
 func BenchmarkFilterAuthorizedProjectsWithIncreasingPolicies(b *testing.B) {
 	ctx := context.Background()
 
-	l := createLogger()
-
-	s, err := New(ctx, l)
+	s, err := New(ctx, WithLogger(createLogger()))
 	require.NoError(b, err, "init state")
 
 	policyCounts := []int{0, 5, 10, 20, 50, 100, 200, 1000}
@@ -322,6 +319,8 @@ func BenchmarkFilterAuthorizedProjectsWithIncreasingPolicies(b *testing.B) {
 			projectsResponse = resp
 		})
 	}
+
+	fmt.Println(projectsResponse)
 }
 
 // BenchmarkFilterAuthorizedProjectsWithIncreasingPolicies/store_with_0_custom_policies_and_10_custom_roles-8       1108	   1107602 ns/op	   275539 B/op	    5656 allocs/op
@@ -338,9 +337,7 @@ func BenchmarkAuthorizedProjectPreparedQueryWithIncreasingRoles(b *testing.B) {
 	var r error
 	ctx := context.Background()
 
-	l := createLogger()
-
-	s, err := New(ctx, l)
+	s, err := New(ctx, WithLogger(createLogger()))
 	require.NoError(b, err, "init state")
 
 	policyCount := 20 // keep this constant while increasing roleCount
@@ -377,9 +374,7 @@ func BenchmarkAuthorizedProjectPreparedQueryWithIncreasingRoles(b *testing.B) {
 func BenchmarkProjectsAuthorizedWithIncreasingRoles(b *testing.B) {
 	ctx := context.Background()
 
-	l := createLogger()
-
-	s, err := New(ctx, l)
+	s, err := New(ctx, WithLogger(createLogger()))
 	require.NoError(b, err, "init state")
 
 	policyCount := 20 // keep this constant while increasing roleCount
@@ -407,6 +402,8 @@ func BenchmarkProjectsAuthorizedWithIncreasingRoles(b *testing.B) {
 			projectsResponse = resp
 		})
 	}
+
+	fmt.Println(projectsResponse)
 }
 
 // BenchmarkProjectsAuthorizedWithIncreasingRoles/store_with_0_custom_roles_and_20_custom_policies-8      8073	    141641 ns/op	   49583 B/op	     543 allocs/op
@@ -420,9 +417,7 @@ func BenchmarkProjectsAuthorizedWithIncreasingRoles(b *testing.B) {
 func BenchmarkFilterAuthorizedProjectsWithIncreasingRoles(b *testing.B) {
 	ctx := context.Background()
 
-	l := createLogger()
-
-	s, err := New(ctx, l)
+	s, err := New(ctx, WithLogger(createLogger()))
 	require.NoError(b, err, "init state")
 
 	policyCount := 20 // keep this constant while increasing roleCount
@@ -463,9 +458,7 @@ func BenchmarkFilterAuthorizedProjectsWithIncreasingRoles(b *testing.B) {
 func BenchmarkProjectsAuthorizedWithIncreasingProjects(b *testing.B) {
 	ctx := context.Background()
 
-	l := createLogger()
-
-	s, err := New(ctx, l)
+	s, err := New(ctx, WithLogger(createLogger()))
 	require.NoError(b, err, "init state")
 
 	projectCounts := []int{5, 20, 100, 200, 300}
@@ -497,6 +490,8 @@ func BenchmarkProjectsAuthorizedWithIncreasingProjects(b *testing.B) {
 			projectsResponse = resp
 		})
 	}
+
+	fmt.Println(projectsResponse)
 }
 
 // BenchmarkProjectsAuthorizedWithIncreasingProjects/store_with_5_projects,_33_policies,_and_5_roles-8         	     519	   2623504 ns/op	  676939 B/op	    9317 allocs/op
@@ -509,9 +504,7 @@ func BenchmarkProjectsAuthorizedWithIncreasingProjects(b *testing.B) {
 func BenchmarkFilterAuthorizedProjectsIncreasingProjects(b *testing.B) {
 	ctx := context.Background()
 
-	l := createLogger()
-
-	s, err := New(ctx, l)
+	s, err := New(ctx, WithLogger(createLogger()))
 	require.NoError(b, err, "init state")
 
 	projectCounts := []int{5, 20, 100, 200, 300}
@@ -554,9 +547,7 @@ func BenchmarkFilterAuthorizedProjectsIncreasingProjects(b *testing.B) {
 func BenchmarkProjectsAuthorizedWithIncreasingSubjects(b *testing.B) {
 	ctx := context.Background()
 
-	l := createLogger()
-
-	s, err := New(ctx, l)
+	s, err := New(ctx, WithLogger(createLogger()))
 	require.NoError(b, err, "init state")
 
 	// keep these values constant as we increase the number of subjects
@@ -587,6 +578,8 @@ func BenchmarkProjectsAuthorizedWithIncreasingSubjects(b *testing.B) {
 			projectsResponse = resp
 		})
 	}
+
+	fmt.Println(projectsResponse)
 }
 
 // BenchmarkProjectsAuthorizedWithIncreasingSubjects/input_with_0_subjects-8         	   10000	    134722 ns/op	   46185 B/op	     499 allocs/op
@@ -605,9 +598,7 @@ func BenchmarkProjectsAuthorizedWithIncreasingSubjects(b *testing.B) {
 func BenchmarkFilterAuthorizedProjectsWithIncreasingSubjects(b *testing.B) {
 	ctx := context.Background()
 
-	l := createLogger()
-
-	s, err := New(ctx, l)
+	s, err := New(ctx, WithLogger(createLogger()))
 	require.NoError(b, err, "init state")
 
 	// keep these values constant as we increase the number of subjects
@@ -637,6 +628,8 @@ func BenchmarkFilterAuthorizedProjectsWithIncreasingSubjects(b *testing.B) {
 			projectsResponse = resp
 		})
 	}
+
+	fmt.Println(projectsResponse)
 }
 
 // BenchmarkFilterAuthorizedProjectsWithIncreasingSubjects/input_with_0_subjects-8         	      40	    39874538 ns/op	    13800522 B/op	    214424 allocs/op
@@ -657,9 +650,7 @@ func BenchmarkFilterAuthorizedProjectsWithIncreasingSubjects(b *testing.B) {
 func BenchmarkAuthorizedProjectsIncreasingMembershipFrequency(b *testing.B) {
 	ctx := context.Background()
 
-	l := createLogger()
-
-	s, err := New(ctx, l)
+	s, err := New(ctx, WithLogger(createLogger()))
 	require.NoError(b, err, "init state")
 
 	policyCount := 10
@@ -738,6 +729,8 @@ func BenchmarkAuthorizedProjectsIncreasingMembershipFrequency(b *testing.B) {
 			projectsResponse = resp
 		})
 	}
+
+	fmt.Println(projectsResponse)
 }
 
 // A: more frequent membership means slower authorization times (but not by much)

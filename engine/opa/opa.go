@@ -29,7 +29,8 @@ type State struct {
 	compiler             *ast.Compiler
 	modules              map[string]*ast.Module
 	preparedEvalProjects rego.PreparedEvalQuery
-	log                  *zap.Logger
+
+	log *zap.Logger
 }
 
 // this needs to match the hardcoded OPA policy document we've put in place
@@ -39,26 +40,25 @@ const (
 	filteredProjectsQuery = "data.authz.introspection.authorized_project"
 )
 
-// OptFunc is the type of functional options to be passed to New()
-type OptFunc func(*State)
-
 // New initializes a fresh OPA state, using the default, hardcoded OPA policy
 // from policy/authz*.rego unless overridden via an opa.OptFunc.
-func New(_ context.Context, l *zap.Logger, opts ...OptFunc) (*State, error) {
+func New(_ context.Context, opts ...OptFunc) (*State, error) {
 	authzProjectsQueryParsed, err := ast.ParseBody(authzProjectsQuery)
 	if err != nil {
 		return nil, errors.Wrapf(err, "parse query %q", authzProjectsQuery)
 	}
+
 	filteredPairsQueryParsed, err := ast.ParseBody(filteredPairsQuery)
 	if err != nil {
 		return nil, errors.Wrapf(err, "parse query %q", filteredPairsQuery)
 	}
+
 	filteredProjectsQueryParsed, err := ast.ParseBody(filteredProjectsQuery)
 	if err != nil {
 		return nil, errors.Wrapf(err, "parse query %q", filteredProjectsQuery)
 	}
+
 	s := State{
-		log:   l,
 		store: inmem.New(),
 		queries: map[string]ast.Body{
 			authzProjectsQuery:    authzProjectsQueryParsed,
@@ -66,6 +66,7 @@ func New(_ context.Context, l *zap.Logger, opts ...OptFunc) (*State, error) {
 			filteredProjectsQuery: filteredProjectsQueryParsed,
 		},
 	}
+
 	for _, opt := range opts {
 		opt(&s)
 	}
@@ -73,15 +74,8 @@ func New(_ context.Context, l *zap.Logger, opts ...OptFunc) (*State, error) {
 	if err := s.initModules(); err != nil {
 		return nil, errors.Wrap(err, "init OPA modules")
 	}
-	return &s, nil
-}
 
-// WithModules allows for injecting an OPA policy via opa.New() for engine
-// initialization.
-func WithModules(mods map[string]*ast.Module) OptFunc {
-	return func(s *State) {
-		s.modules = mods
-	}
+	return &s, nil
 }
 
 // initModules parses the rego files that have been compiled-in and stores the
@@ -223,9 +217,8 @@ func dumpData(ctx context.Context, store storage.Store, l *zap.Logger) error {
 	return store.Commit(ctx, txn)
 }
 
-// ProjectsAuthorized evaluates whether a given [subject, resource, action,
-// projects] tuple is authorized and returns the list of associated allowed
-// projects from the set of requested projects passed in.
+// ProjectsAuthorized evaluates whether a given [subject, resource, action, projects] tuple is authorized
+// and returns the list of associated allowed projects from the set of requested projects passed in.
 func (s *State) ProjectsAuthorized(
 	ctx context.Context,
 	subjects engine.Subjects,

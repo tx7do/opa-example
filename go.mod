@@ -3,6 +3,7 @@ module github.com/tx7do/opa-example
 go 1.19
 
 require (
+	github.com/casbin/casbin/v2 v2.56.0
 	github.com/kevinburke/go-bindata v3.24.0+incompatible
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/open-policy-agent/opa v0.45.0
@@ -13,6 +14,7 @@ require (
 )
 
 require (
+	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

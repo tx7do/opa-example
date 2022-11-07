@@ -10,20 +10,20 @@ type Engine interface {
 }
 
 type Authorizer interface {
-	ProjectsAuthorized(context.Context, Subjects, Action, Resource, Projects) ([]string, error)
+	ProjectsAuthorized(ctx context.Context, subjects Subjects, action Action, resource Resource, projects Projects) ([]string, error)
 
-	FilterAuthorizedPairs(context.Context, Subjects, []Pair) ([]Pair, error)
+	FilterAuthorizedPairs(ctx context.Context, subjects Subjects, pairs []Pair) ([]Pair, error)
 
-	FilterAuthorizedProjects(context.Context, Subjects) ([]string, error)
+	FilterAuthorizedProjects(ctx context.Context, subjects Subjects) ([]string, error)
 }
 
 type Writer interface {
-	SetPolicies(context.Context, map[string]interface{}, map[string]interface{}) error
+	SetPolicies(ctx context.Context, policyMap map[string]interface{}, roleMap map[string]interface{}) error
 }
 
 type Subjects []string
 
-func Subject(subs ...string) Subjects {
+func SubjectList(subs ...string) Subjects {
 	return subs
 }
 
@@ -42,4 +42,8 @@ type Project string
 type Pair struct {
 	Resource Resource `json:"resource"`
 	Action   Action   `json:"action"`
+}
+
+func MakePair(res, act string) Pair {
+	return Pair{Resource(res), Action(act)}
 }
