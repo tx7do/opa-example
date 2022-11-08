@@ -225,22 +225,21 @@ func (s *State) ProjectsAuthorized(
 	action engine.Action,
 	resource engine.Resource,
 	projects engine.Projects) ([]string, error) {
-
-	subs := ast.NewArray()
+	var subs []*ast.Term
 	for _, sub := range subjects {
-		subs.Append(ast.NewTerm(ast.String(sub)))
+		subs = append(subs, ast.NewTerm(ast.String(sub)))
 	}
 
-	projs := ast.NewArray()
+	var projs []*ast.Term
 	for _, proj := range projects {
-		projs.Append(ast.NewTerm(ast.String(proj)))
+		projs = append(projs, ast.NewTerm(ast.String(proj)))
 	}
 
 	input := ast.NewObject(
-		[2]*ast.Term{ast.NewTerm(ast.String("subjects")), ast.NewTerm(subs)},
+		[2]*ast.Term{ast.NewTerm(ast.String("subjects")), ast.ArrayTerm(subs...)},
 		[2]*ast.Term{ast.NewTerm(ast.String("resource")), ast.NewTerm(ast.String(resource))},
 		[2]*ast.Term{ast.NewTerm(ast.String("action")), ast.NewTerm(ast.String(action))},
-		[2]*ast.Term{ast.NewTerm(ast.String("projects")), ast.NewTerm(projs)},
+		[2]*ast.Term{ast.NewTerm(ast.String("projects")), ast.ArrayTerm(projs...)},
 	)
 	resultSet, err := s.preparedEvalProjects.Eval(ctx, rego.EvalParsedInput(input))
 	if err != nil {
